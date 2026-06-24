@@ -54,13 +54,45 @@ interface ChatHeaderProps {
 const ModelList = ({
   setSelectedModel,
   setOpen,
-  isImagesToolActive
+  isImagesToolActive,
+  currentProvider,
+  fetchedModels
 }: {
   setSelectedModel: (model: string) => void,
   setOpen: (open: boolean) => void,
-  isImagesToolActive: boolean
+  isImagesToolActive: boolean,
+  currentProvider: string,
+  fetchedModels?: string[]
 }) => {
   const models = isImagesToolActive ? GEMINI_IMAGE_MODELS : GEMINI_MODELS
+  
+  // If not using Gemini and there are fetched models, show them
+  if (currentProvider !== 'google' && fetchedModels && fetchedModels.length > 0) {
+    return (
+      <Command>
+        <CommandInput placeholder="Search model..." />
+        <CommandList>
+          <CommandEmpty>No model found.</CommandEmpty>
+          <CommandGroup>
+            {fetchedModels.map((model) => (
+              <CommandItem
+                key={model}
+                value={model}
+                onSelect={(currentValue) => {
+                  setSelectedModel(currentValue)
+                  setOpen(false)
+                }}
+              >
+                {model}
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        </CommandList>
+      </Command>
+    )
+  }
+  
+  // Default: show Gemini models
   return (
     <Command>
       <CommandInput placeholder="Search model..." />
@@ -187,7 +219,13 @@ export function ChatHeader({
                 {/* Visually hidden title for screen reader accessibility */}
                 <DrawerTitle className="sr-only">Select a Model</DrawerTitle>
                 <div className="p-4">
-                  <ModelList setSelectedModel={handleModelSelect} setOpen={setIsModelDropdownOpen} isImagesToolActive={settings.tools.images} />
+                  <ModelList 
+                    setSelectedModel={handleModelSelect} 
+                    setOpen={setIsModelDropdownOpen} 
+                    isImagesToolActive={settings.tools.images}
+                    currentProvider={settings.provider}
+                    fetchedModels={settings.fetchedModels?.[settings.provider]}
+                  />
                 </div>
               </DrawerContent>
             </Drawer>
@@ -205,7 +243,13 @@ export function ChatHeader({
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[300px] p-0">
-                <ModelList setSelectedModel={handleModelSelect} setOpen={setIsModelDropdownOpen} isImagesToolActive={settings.tools.images} />
+                <ModelList 
+                  setSelectedModel={handleModelSelect} 
+                  setOpen={setIsModelDropdownOpen} 
+                  isImagesToolActive={settings.tools.images}
+                  currentProvider={settings.provider}
+                  fetchedModels={settings.fetchedModels?.[settings.provider]}
+                />
               </PopoverContent>
             </Popover>
           )}

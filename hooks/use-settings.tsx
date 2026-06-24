@@ -228,7 +228,8 @@ export const useSettings = () => {
         settings: {
             ...context.settings,
             apiKeys: context.settings.apiKeys || {},
-            baseUrls: context.settings.baseUrls || {}
+            baseUrls: context.settings.baseUrls || {},
+            fetchedModels: context.settings.fetchedModels || {}
         }
     }
 }

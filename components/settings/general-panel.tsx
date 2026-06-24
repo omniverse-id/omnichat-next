@@ -2,6 +2,7 @@
 "use client"
 
 import type React from "react"
+import { useState } from "react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command"
 import { Button } from "@/components/ui/button"
@@ -38,6 +39,11 @@ interface GeneralPanelProps {
     setSelectedModel: (model: string) => void;
     modelDropdownOpen: boolean;
     setModelDropdownOpen: (isOpen: boolean) => void;
+    onFetchModels?: (models: string[], provider: string) => void;
+}
+
+type FetchedModelsState = {
+    [key: string]: string[] | undefined;
 }
 
 export function GeneralPanel({
@@ -50,9 +56,62 @@ export function GeneralPanel({
     selectedModel,
     setSelectedModel,
     modelDropdownOpen,
-    setModelDropdownOpen
+    setModelDropdownOpen,
+    onFetchModels
 }: GeneralPanelProps) {
+    const [fetchedModels, setFetchedModels] = useState<FetchedModelsState>({});
+    const [isFetching, setIsFetching] = useState(false);
+    
     const currentProviderConfig = providersConfig[selectedProvider] || Object.values(providersConfig)[0];
+
+    const handleFetchModels = async () => {
+        if (!selectedProvider) return;
+        
+        setIsFetching(true);
+        try {
+            const response = await fetch('/api/models/fetch', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    provider: selectedProvider,
+                    baseUrl: providerSettings[selectedProvider]?.baseUrl,
+                    apiKey: providerSettings[selectedProvider]?.apiKey
+                })
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('[v0] Fetch models error:', errorData);
+                alert(`Failed to fetch models: ${errorData.error}`);
+                return;
+            }
+            
+            const data = await response.json();
+            const models = data.models || [];
+            
+            if (models.length === 0) {
+                alert('No models found. Please check your configuration.');
+                return;
+            }
+            
+            setFetchedModels(prev => ({ ...prev, [selectedProvider]: models }));
+            
+            // Call parent callback to save to global settings
+            if (onFetchModels) {
+                onFetchModels(models, selectedProvider);
+            }
+            
+            // Auto-select first model if none selected
+            if (!selectedModel || selectedModel === '') {
+                setSelectedModel(models[0]);
+            }
+        } catch (error) {
+            console.error('[v0] Fetch models error:', error);
+            alert('Failed to fetch models. Please check your settings and try again.');
+        } finally {
+            setIsFetching(false);
+        }
+    };
 
     return (
         <div className="space-y-6">
@@ -138,6 +197,12 @@ export function GeneralPanel({
                                                         {model.name}
                                                     </CommandItem>
                                                 ))
+                                            ) : fetchedModels[selectedProvider]?.length ? (
+                                                fetchedModels[selectedProvider]!.map((model) => (
+                                                    <CommandItem key={model} value={model} onSelect={(currentValue) => { setSelectedModel(currentValue); setModelDropdownOpen(false); }}>
+                                                        {model}
+                                                    </CommandItem>
+                                                ))
                                             ) : (
                                                 ['gpt-4o', 'gpt-4o-mini', 'o1-preview'].map((model) => (
                                                     <CommandItem key={model} value={model} onSelect={(currentValue) => { setSelectedModel(currentValue); setModelDropdownOpen(false); }}>
@@ -153,9 +218,15 @@ export function GeneralPanel({
                         <p className="text-xs text-muted-foreground">Set the inference model.</p>
                     </div>
                     {selectedProvider !== 'google' && (
-                        <Button variant="outline" size="sm" className="gap-2 bg-transparent">
-                            <RefreshCw className="w-3.5 h-3.5" />
-                            Fetch Models
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="gap-2 bg-transparent"
+                            onClick={handleFetchModels}
+                            disabled={isFetching}
+                        >
+                            <RefreshCw className={cn("w-3.5 h-3.5", isFetching && "animate-spin")} />
+                            {isFetching ? 'Fetching...' : 'Fetch Models'}
                         </Button>
                     )}
                 </div>

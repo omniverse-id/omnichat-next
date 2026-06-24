@@ -167,6 +167,15 @@ export default function SettingsPage() {
     updateSettings({ model: m });
   };
 
+  const handleFetchModels = (models: string[], provider: string) => {
+    updateSettings({ 
+      fetchedModels: { 
+        ...(settings?.fetchedModels || {}), 
+        [provider]: models 
+      } 
+    });
+  };
+
   const handleAdvChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     const numValue = e.target.type === 'number' ? parseFloat(value) : value;
@@ -184,7 +193,8 @@ export default function SettingsPage() {
           providerDropdownOpen={providerDropdownOpen} setProviderDropdownOpen={setProviderDropdownOpen}
           providerSettings={providerSettings} handleProviderSettingChange={handleProviderChange}
           selectedModel={model} setSelectedModel={handleModelSelect}
-          modelDropdownOpen={modelDropdownOpen} setModelDropdownOpen={setModelDropdownOpen} />
+          modelDropdownOpen={modelDropdownOpen} setModelDropdownOpen={setModelDropdownOpen}
+          onFetchModels={handleFetchModels} />
       case "ui":
         return <UIPanel
           selectedLanguage={language} setSelectedLanguage={setLanguage}
