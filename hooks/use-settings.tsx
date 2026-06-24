@@ -42,6 +42,7 @@ const defaultSettings: Settings = {
     displayUserMessagesRaw: false,
     displayModelMessagesRaw: false,
     apiKeys: {},
+    baseUrls: {},
     advanced: {
         stopSequences: [],
         maxOutputTokens: 2048,
@@ -226,7 +227,8 @@ export const useSettings = () => {
         ...context,
         settings: {
             ...context.settings,
-            apiKeys: context.settings.apiKeys || {}
+            apiKeys: context.settings.apiKeys || {},
+            baseUrls: context.settings.baseUrls || {}
         }
     }
 }

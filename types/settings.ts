@@ -29,6 +29,7 @@ export interface Settings {
   displayUserMessagesRaw: boolean;
   displayModelMessagesRaw: boolean;
   apiKeys: Record<string, string>;
+  baseUrls: Record<string, string>;
   advanced: {
     stopSequences: string[];
     maxOutputTokens: number;

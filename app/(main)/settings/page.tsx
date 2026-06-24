@@ -47,11 +47,12 @@ export default function SettingsPage() {
     try {
       if (!providersConfig) throw new Error("providersConfig is missing");
       const keys = settings?.apiKeys || {};
+      const baseUrls = settings?.baseUrls || {};
       for (const key in providersConfig) {
         const id = key as ProviderId;
         initial[id] = {
           apiKey: keys[id] || "",
-          baseUrl: providersConfig[id]?.baseUrl || ""
+          baseUrl: baseUrls[id] || providersConfig[id]?.baseUrl || ""
         };
       }
     } catch (err) {
@@ -100,6 +101,10 @@ export default function SettingsPage() {
       apiKeys: Object.keys(providerSettings).reduce((acc, key) => {
         acc[key] = providerSettings[key as ProviderId].apiKey || "";
         return acc;
+      }, {} as Record<string, string>),
+      baseUrls: Object.keys(providerSettings).reduce((acc, key) => {
+        acc[key] = providerSettings[key as ProviderId].baseUrl || "";
+        return acc;
       }, {} as Record<string, string>)
     })
     router.push("/");
@@ -145,6 +150,9 @@ export default function SettingsPage() {
     setProviderSettings(p => ({ ...p, [provider]: { ...p[provider] || {}, [field]: value } }));
     if (field === 'apiKey' && settings) {
       updateSettings({ apiKeys: { ...(settings.apiKeys || {}), [provider]: value } });
+    }
+    if (field === 'baseUrl' && settings) {
+      updateSettings({ baseUrls: { ...(settings.baseUrls || {}), [provider]: value } });
     }
   };
 
