@@ -62,7 +62,7 @@ export async function routeToProvider(config: ProviderConfig): Promise<Response>
   } else {
     // All other providers use OpenAI-compatible API
     return await handleOpenAIProvider(
-      { baseUrl, apiKey, model },
+      { baseUrl, apiKey, model, provider },
       messages,
       temperature,
       advanced,

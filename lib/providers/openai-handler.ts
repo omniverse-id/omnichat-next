@@ -1,9 +1,16 @@
 import { ReadableStream } from "stream/web";
+import { 
+  checkTokenLimit, 
+  trimMessagesToLimit, 
+  formatTokenWarning,
+  getProviderLimit 
+} from "./token-limiter";
 
 interface OpenAIHandlerConfig {
   baseUrl: string;
   apiKey?: string;
   model: string;
+  provider: string;
 }
 
 interface OpenAIMessage {
@@ -18,7 +25,16 @@ export async function handleOpenAIProvider(
   advanced: any,
   systemInstruction: string
 ): Promise<Response> {
-  const { baseUrl, apiKey, model } = config;
+  const { baseUrl, apiKey, model, provider } = config;
+
+  // Check and trim messages if they exceed provider limits
+  const tokenCheck = checkTokenLimit(messages, provider, model);
+  
+  let messagesToProcess = messages;
+  if (!tokenCheck.isSafe) {
+    console.warn(`[v0] Token limit warning for ${provider}: ${tokenCheck.estimatedTokens} tokens`, tokenCheck.warning);
+    messagesToProcess = trimMessagesToLimit(messages, provider, model);
+  }
 
   const formattedMessages: OpenAIMessage[] = [];
 
@@ -31,7 +47,7 @@ export async function handleOpenAIProvider(
   }
 
   // Format messages for OpenAI-compatible API
-  for (const msg of messages) {
+  for (const msg of messagesToProcess) {
     if (msg.role === "function") {
       // Handle function responses
       formattedMessages.push({
